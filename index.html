@@ -1,1 +1,333 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <title>بحث تسكين الحجاج</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 16px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .search-box {
+      background: #fff;
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      font-size: 18px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #0b6bcb;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    .status {
+      text-align: center;
+      color: #666;
+      margin: 12px 0;
+    }
+
+    .card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 12px;
+    }
+
+    .name {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #0b6bcb;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #eee;
+      padding: 8px 0;
+    }
+
+    .label {
+      color: #666;
+      min-width: 115px;
+    }
+
+    .value {
+      font-weight: bold;
+      text-align: left;
+      direction: ltr;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      flex: 1;
+      text-align: center;
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .call {
+      background: #0b6bcb;
+    }
+
+    .whatsapp {
+      background: #128c7e;
+    }
+
+    .empty {
+      text-align: center;
+      color: #777;
+      background: #fff;
+      padding: 20px;
+      border-radius: 14px;
+    }
+
+    .warning {
+      background: #fff3cd;
+      color: #664d03;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .row {
+        display: block;
+      }
+
+      .value {
+        text-align: right;
+        margin-top: 4px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>بحث تسكين الحجاج</h1>
+
+    <div class="search-box">
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="اكتب اسم الحاج أو جزء من الاسم"
+        oninput="handleSearch()"
+      >
+      <div class="hint">مثال: محمد، احمد علي، خالد</div>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div id="results">
+      <div class="empty">ابدأ بكتابة اسم الحاج للبحث</div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzhw5JxSRc4IJFpmfK9i68GyfbgUleWTSqweowefqL4Sx0Gb5fQOUcJup8q-OYBNKDQyQ/exec';
+
+    let searchTimer = null;
+    let lastScriptTag = null;
+
+    function handleSearch() {
+      clearTimeout(searchTimer);
+
+      const query = document.getElementById('searchInput').value.trim();
+      const status = document.getElementById('status');
+      const results = document.getElementById('results');
+
+      if (query.length < 2) {
+        status.textContent = '';
+        results.innerHTML = '<div class="empty">اكتب حرفين على الأقل للبحث</div>';
+        return;
+      }
+
+      status.textContent = 'جاري البحث...';
+
+      searchTimer = setTimeout(() => {
+        searchPilgrims(query);
+      }, 300);
+    }
+
+    function searchPilgrims(query) {
+      const callbackName = 'handlePilgrimResults_' + Date.now();
+
+      window[callbackName] = function(response) {
+        showResults(response);
+
+        delete window[callbackName];
+
+        if (lastScriptTag) {
+          lastScriptTag.remove();
+          lastScriptTag = null;
+        }
+      };
+
+      const url =
+        API_URL +
+        '?action=search' +
+        '&q=' + encodeURIComponent(query) +
+        '&callback=' + encodeURIComponent(callbackName);
+
+      const script = document.createElement('script');
+      script.src = url;
+
+      script.onerror = function() {
+        document.getElementById('status').textContent = '';
+        document.getElementById('results').innerHTML =
+          '<div class="empty">تعذر الاتصال بخدمة البحث. تأكد من رابط Apps Script والنشر.</div>';
+
+        delete window[callbackName];
+      };
+
+      document.body.appendChild(script);
+      lastScriptTag = script;
+    }
+
+    function showResults(response) {
+      const status = document.getElementById('status');
+      const results = document.getElementById('results');
+
+      if (!response || !response.success) {
+        status.textContent = '';
+        results.innerHTML =
+          '<div class="empty">حدث خطأ: ' + escapeHtml(response && response.message ? response.message : 'خطأ غير معروف') + '</div>';
+        return;
+      }
+
+      const data = response.data || [];
+
+      status.textContent = 'عدد النتائج: ' + data.length;
+
+      if (data.length === 0) {
+        results.innerHTML = '<div class="empty">لا توجد نتائج مطابقة</div>';
+        return;
+      }
+
+      results.innerHTML = data.map(item => {
+        const supervisorPhone = cleanSaudiPhone(item['جوال المشرف']);
+        const pilgrimPhone = cleanSaudiPhone(item['رقم الجوال']);
+
+        const callLink = supervisorPhone ? `tel:${supervisorPhone}` : '#';
+
+        const whatsappMessage = encodeURIComponent(
+          `السلام عليكم، أحتاج معلومات عن الحاج: ${item['اسم الحاج'] || ''} - الممر: ${item['رقم الممر'] || ''} - الصالة: ${item['رقم الصالة'] || ''} - السرير: ${item['رقم السرير'] || ''}`
+        );
+
+        const whatsappLink = supervisorPhone
+          ? `https://wa.me/${supervisorPhone.replace('+', '')}?text=${whatsappMessage}`
+          : '#';
+
+        return `
+          <div class="card">
+            <div class="name">${escapeHtml(item['اسم الحاج'] || '')}</div>
+
+            ${field('رقم الحاج', item['PilgrimID'])}
+            ${field('الجنسية', item['الجنسية'])}
+            ${field('رقم جوال الحاج', pilgrimPhone || item['رقم الجوال'])}
+            ${field('رقم الممر', item['رقم الممر'])}
+            ${field('رقم الصالة', item['رقم الصالة'])}
+            ${field('رقم السرير', item['رقم السرير'])}
+            ${field('اسم المشرف', item['اسم المشرف'])}
+            ${field('جوال المشرف', supervisorPhone || item['جوال المشرف'])}
+
+            <div class="actions">
+              <a class="btn call" href="${callLink}">اتصال بالمشرف</a>
+              <a class="btn whatsapp" href="${whatsappLink}" target="_blank">واتساب</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function field(label, value) {
+      return `
+        <div class="row">
+          <div class="label">${escapeHtml(label)}</div>
+          <div class="value">${escapeHtml(value || '-')}</div>
+        </div>
+      `;
+    }
+
+    function cleanSaudiPhone(phone) {
+      if (!phone) return '';
+
+      let number = String(phone).replace(/\D/g, '');
+
+      if (!number) return '';
+
+      if (number.startsWith('966')) {
+        return '+' + number;
+      }
+
+      if (number.startsWith('05')) {
+        return '+966' + number.substring(1);
+      }
+
+      if (number.startsWith('5') && number.length === 9) {
+        return '+966' + number;
+      }
+
+      return '+' + number;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
