@@ -16,7 +16,7 @@
     }
 
     .container {
-      max-width: 850px;
+      max-width: 1100px;
       margin: auto;
     }
 
@@ -26,7 +26,29 @@
       margin-bottom: 16px;
     }
 
-    .search-box {
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      border: 0;
+      background: #fff;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .tab-btn.active {
+      background: #0b6bcb;
+      color: #fff;
+    }
+
+    .box {
       background: #fff;
       padding: 16px;
       border-radius: 14px;
@@ -34,17 +56,20 @@
       margin-bottom: 16px;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       box-sizing: border-box;
       padding: 14px;
-      font-size: 18px;
+      font-size: 17px;
       border: 1px solid #ccc;
       border-radius: 10px;
       outline: none;
+      background: #fff;
     }
 
-    input:focus {
+    input:focus,
+    select:focus {
       border-color: #0b6bcb;
     }
 
@@ -85,7 +110,7 @@
 
     .label {
       color: #666;
-      min-width: 115px;
+      min-width: 120px;
     }
 
     .value {
@@ -98,24 +123,37 @@
       display: flex;
       gap: 8px;
       margin-top: 14px;
+      flex-wrap: wrap;
     }
 
     .btn {
-      flex: 1;
+      border: 0;
+      cursor: pointer;
       text-align: center;
       text-decoration: none;
       padding: 12px;
       border-radius: 10px;
       color: #fff;
       font-weight: bold;
+      display: inline-block;
+      min-width: 130px;
+      font-size: 14px;
     }
 
-    .call {
+    .blue {
       background: #0b6bcb;
     }
 
-    .whatsapp {
+    .green {
       background: #128c7e;
+    }
+
+    .gray {
+      background: #555;
+    }
+
+    .orange {
+      background: #d98200;
     }
 
     .empty {
@@ -126,16 +164,107 @@
       border-radius: 14px;
     }
 
-    .warning {
-      background: #fff3cd;
-      color: #664d03;
-      padding: 12px;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: #fff;
+      padding: 18px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: bold;
+      color: #0b6bcb;
+    }
+
+    .stat-label {
+      margin-top: 8px;
+      color: #666;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
       border-radius: 12px;
-      margin-bottom: 12px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 9px;
+      text-align: center;
       font-size: 14px;
     }
 
-    @media (max-width: 600px) {
+    th {
+      background: #0b6bcb;
+      color: #fff;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .report-title {
+      text-align: center;
+      margin: 6px 0;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .no-print,
+      .tabs,
+      h1 {
+        display: none !important;
+      }
+
+      .box,
+      .card {
+        box-shadow: none;
+        border: 0;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th {
+        background: #ddd !important;
+        color: #000 !important;
+      }
+    }
+
+    @media (max-width: 700px) {
+      body {
+        padding: 10px;
+      }
+
+      .tabs {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
       .row {
         display: block;
       }
@@ -145,8 +274,18 @@
         margin-top: 4px;
       }
 
-      .actions {
-        flex-direction: column;
+      .btn {
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th,
+      td {
+        padding: 6px;
       }
     }
   </style>
@@ -156,91 +295,182 @@
   <div class="container">
     <h1>بحث تسكين الحجاج</h1>
 
-    <div class="search-box">
-      <input
-        id="searchInput"
-        type="text"
-        placeholder="اكتب اسم الحاج أو جزء من الاسم"
-        oninput="handleSearch()"
-      >
-      <div class="hint">مثال: محمد، احمد علي، خالد</div>
+    <div class="tabs no-print">
+      <button class="tab-btn active" onclick="showSection('searchSection', this)">
+        بحث الحجاج
+      </button>
+
+      <button class="tab-btn" onclick="showSection('reportsSection', this); loadSupervisors();">
+        كشف حسب المشرف
+      </button>
+
+      <button class="tab-btn" onclick="showSection('supervisorsSection', this); loadSupervisorsList();">
+        كشوف المشرفين
+      </button>
+
+      <button class="tab-btn" onclick="showSection('statsSection', this); loadStats();">
+        الإحصائيات
+      </button>
     </div>
 
-    <div id="status" class="status"></div>
-    <div id="results">
-      <div class="empty">ابدأ بكتابة اسم الحاج للبحث</div>
-    </div>
+    <!-- قسم البحث -->
+    <section id="searchSection" class="section active">
+      <div class="box no-print">
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="اكتب اسم الحاج أو رقم الهوية"
+          oninput="handleSearch()"
+        >
+        <div class="hint">مثال: محمد، أحمد علي، أو رقم الهوية</div>
+      </div>
+
+      <div id="searchStatus" class="status"></div>
+
+      <div id="searchResults">
+        <div class="empty">ابدأ بكتابة اسم الحاج أو رقم الهوية للبحث</div>
+      </div>
+    </section>
+
+    <!-- قسم كشف حسب المشرف -->
+    <section id="reportsSection" class="section">
+      <div class="box no-print">
+        <select id="supervisorSelect" onchange="loadSupervisorReport()">
+          <option value="">اختر المشرف</option>
+        </select>
+
+        <div class="actions">
+          <button class="btn blue" onclick="window.print()">طباعة / PDF</button>
+          <button class="btn green" onclick="exportReportToExcel()">تصدير Excel</button>
+        </div>
+      </div>
+
+      <div id="reportArea">
+        <div class="empty">اختر مشرفًا لعرض الكشف</div>
+      </div>
+    </section>
+
+    <!-- قسم كشوف المشرفين -->
+    <section id="supervisorsSection" class="section">
+      <div id="supervisorsListArea">
+        <div class="empty">جاري تحميل كشوف المشرفين...</div>
+      </div>
+    </section>
+
+    <!-- قسم الإحصائيات -->
+    <section id="statsSection" class="section">
+      <div id="statsArea">
+        <div class="empty">جاري تحميل الإحصائيات...</div>
+      </div>
+    </section>
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzhw5JxSRc4IJFpmfK9i68GyfbgUleWTSqweowefqL4Sx0Gb5fQOUcJup8q-OYBNKDQyQ/exec';
+    /*
+      ضع هنا رابط Apps Script Web App الذي ينتهي بـ /exec
+      مثال:
+      const API_URL = 'https://script.google.com/macros/s/AKfycbxxxxxxxxxxxx/exec';
+    */
+    const API_URL = 'https://script.google.com/macros/s/AKfycbx6b5pEk-jE00Tbi7wB7Ic8gQESNAY9lt2haicEstmW3a8YF5sKNt7_UfKjIQHoRyLe5A/exec';
 
     let searchTimer = null;
-    let lastScriptTag = null;
+    let currentReportRows = [];
+    let currentReportSupervisor = '';
+
+    function jsonp(params, successHandler, errorHandler) {
+      const callbackName =
+        'callback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+
+      const script = document.createElement('script');
+
+      window[callbackName] = function(response) {
+        successHandler(response);
+        delete window[callbackName];
+
+        if (script && script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      };
+
+      const query = Object.keys(params)
+        .map(function(key) {
+          return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+        })
+        .join('&');
+
+      script.src = API_URL + '?' + query + '&callback=' + callbackName;
+
+      script.onerror = function() {
+        delete window[callbackName];
+
+        if (script && script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+
+        if (errorHandler) {
+          errorHandler();
+        }
+      };
+
+      document.body.appendChild(script);
+    }
+
+    function showSection(sectionId, button) {
+      document.querySelectorAll('.section').forEach(function(section) {
+        section.classList.remove('active');
+      });
+
+      document.getElementById(sectionId).classList.add('active');
+
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+
+      button.classList.add('active');
+    }
 
     function handleSearch() {
       clearTimeout(searchTimer);
 
       const query = document.getElementById('searchInput').value.trim();
-      const status = document.getElementById('status');
-      const results = document.getElementById('results');
+      const status = document.getElementById('searchStatus');
+      const results = document.getElementById('searchResults');
 
       if (query.length < 2) {
         status.textContent = '';
-        results.innerHTML = '<div class="empty">اكتب حرفين على الأقل للبحث</div>';
+        results.innerHTML =
+          '<div class="empty">اكتب حرفين على الأقل أو رقم الهوية للبحث</div>';
         return;
       }
 
       status.textContent = 'جاري البحث...';
 
-      searchTimer = setTimeout(() => {
-        searchPilgrims(query);
+      searchTimer = setTimeout(function() {
+        jsonp(
+          {
+            action: 'search',
+            q: query
+          },
+          showSearchResults,
+          function() {
+            status.textContent = '';
+            results.innerHTML =
+              '<div class="empty">تعذر الاتصال بخدمة البحث</div>';
+          }
+        );
       }, 300);
     }
 
-    function searchPilgrims(query) {
-      const callbackName = 'handlePilgrimResults_' + Date.now();
-
-      window[callbackName] = function(response) {
-        showResults(response);
-
-        delete window[callbackName];
-
-        if (lastScriptTag) {
-          lastScriptTag.remove();
-          lastScriptTag = null;
-        }
-      };
-
-      const url =
-        API_URL +
-        '?action=search' +
-        '&q=' + encodeURIComponent(query) +
-        '&callback=' + encodeURIComponent(callbackName);
-
-      const script = document.createElement('script');
-      script.src = url;
-
-      script.onerror = function() {
-        document.getElementById('status').textContent = '';
-        document.getElementById('results').innerHTML =
-          '<div class="empty">تعذر الاتصال بخدمة البحث. تأكد من رابط Apps Script والنشر.</div>';
-
-        delete window[callbackName];
-      };
-
-      document.body.appendChild(script);
-      lastScriptTag = script;
-    }
-
-    function showResults(response) {
-      const status = document.getElementById('status');
-      const results = document.getElementById('results');
+    function showSearchResults(response) {
+      const status = document.getElementById('searchStatus');
+      const results = document.getElementById('searchResults');
 
       if (!response || !response.success) {
         status.textContent = '';
         results.innerHTML =
-          '<div class="empty">حدث خطأ: ' + escapeHtml(response && response.message ? response.message : 'خطأ غير معروف') + '</div>';
+          '<div class="empty">حدث خطأ: ' +
+          escapeHtml(response && response.message ? response.message : 'خطأ غير معروف') +
+          '</div>';
         return;
       }
 
@@ -253,25 +483,37 @@
         return;
       }
 
-      results.innerHTML = data.map(item => {
+      results.innerHTML = data.map(function(item) {
         const supervisorPhone = cleanSaudiPhone(item['جوال المشرف']);
         const pilgrimPhone = cleanSaudiPhone(item['رقم الجوال']);
 
-        const callLink = supervisorPhone ? `tel:${supervisorPhone}` : '#';
-
-        const whatsappMessage = encodeURIComponent(
-          `السلام عليكم، أحتاج معلومات عن الحاج: ${item['اسم الحاج'] || ''} - الممر: ${item['رقم الممر'] || ''} - الصالة: ${item['رقم الصالة'] || ''} - السرير: ${item['رقم السرير'] || ''}`
+        const supervisorWhatsAppMessage = encodeURIComponent(
+          'السلام عليكم، أحتاج معلومات عن الحاج: ' +
+          (item['اسم الحاج'] || '') +
+          ' - رقم الهوية: ' +
+          (item['رقم الهوية'] || '') +
+          ' - الممر: ' +
+          (item['رقم الممر'] || '') +
+          ' - الصالة: ' +
+          (item['رقم الصالة'] || '') +
+          ' - السرير: ' +
+          (item['رقم السرير'] || '')
         );
 
-        const whatsappLink = supervisorPhone
-          ? `https://wa.me/${supervisorPhone.replace('+', '')}?text=${whatsappMessage}`
-          : '#';
+        const pilgrimWhatsAppMessage = encodeURIComponent(
+          'السلام عليكم، موقع السكن الخاص بكم: الممر ' +
+          (item['رقم الممر'] || '') +
+          '، الصالة ' +
+          (item['رقم الصالة'] || '') +
+          '، السرير ' +
+          (item['رقم السرير'] || '')
+        );
 
         return `
           <div class="card">
             <div class="name">${escapeHtml(item['اسم الحاج'] || '')}</div>
 
-            ${field('رقم الحاج', item['PilgrimID'])}
+            ${field('رقم الهوية', item['رقم الهوية'])}
             ${field('الجنسية', item['الجنسية'])}
             ${field('رقم جوال الحاج', pilgrimPhone || item['رقم الجوال'])}
             ${field('رقم الممر', item['رقم الممر'])}
@@ -281,12 +523,393 @@
             ${field('جوال المشرف', supervisorPhone || item['جوال المشرف'])}
 
             <div class="actions">
-              <a class="btn call" href="${callLink}">اتصال بالمشرف</a>
-              <a class="btn whatsapp" href="${whatsappLink}" target="_blank">واتساب</a>
+              ${
+                pilgrimPhone
+                  ? `<a class="btn blue" href="tel:${pilgrimPhone}">اتصال بالحاج</a>`
+                  : ''
+              }
+
+              ${
+                pilgrimPhone
+                  ? `<a class="btn green" target="_blank" href="https://wa.me/${pilgrimPhone.replace('+', '')}?text=${pilgrimWhatsAppMessage}">واتساب الحاج</a>`
+                  : ''
+              }
+
+              ${
+                supervisorPhone
+                  ? `<a class="btn gray" href="tel:${supervisorPhone}">اتصال بالمشرف</a>`
+                  : ''
+              }
+
+              ${
+                supervisorPhone
+                  ? `<a class="btn orange" target="_blank" href="https://wa.me/${supervisorPhone.replace('+', '')}?text=${supervisorWhatsAppMessage}">واتساب المشرف</a>`
+                  : ''
+              }
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    function loadSupervisors() {
+      const select = document.getElementById('supervisorSelect');
+
+      if (select.dataset.loaded === 'yes') {
+        return;
+      }
+
+      jsonp(
+        {
+          action: 'supervisors'
+        },
+        function(response) {
+          if (!response || !response.success) {
+            select.innerHTML = '<option value="">تعذر تحميل المشرفين</option>';
+            return;
+          }
+
+          const supervisors = response.data || [];
+
+          select.innerHTML =
+            '<option value="">اختر المشرف</option>' +
+            supervisors.map(function(item) {
+              return `
+                <option value="${escapeHtml(item.name)}">
+                  ${escapeHtml(item.name)} - ${escapeHtml(item.phone || '')}
+                </option>
+              `;
+            }).join('');
+
+          select.dataset.loaded = 'yes';
+        },
+        function() {
+          select.innerHTML = '<option value="">تعذر الاتصال بخدمة المشرفين</option>';
+        }
+      );
+    }
+
+    function loadSupervisorReport() {
+      const supervisor = document.getElementById('supervisorSelect').value;
+      const reportArea = document.getElementById('reportArea');
+
+      currentReportRows = [];
+      currentReportSupervisor = supervisor;
+
+      if (!supervisor) {
+        reportArea.innerHTML = '<div class="empty">اختر مشرفًا لعرض الكشف</div>';
+        return;
+      }
+
+      reportArea.innerHTML = '<div class="empty">جاري تحميل الكشف...</div>';
+
+      jsonp(
+        {
+          action: 'supervisorReport',
+          supervisor: supervisor
+        },
+        function(response) {
+          if (!response || !response.success) {
+            reportArea.innerHTML =
+              '<div class="empty">حدث خطأ أثناء تحميل الكشف</div>';
+            return;
+          }
+
+          const rows = response.data.pilgrims || [];
+          currentReportRows = rows;
+
+          renderSupervisorReport(supervisor, rows);
+        },
+        function() {
+          reportArea.innerHTML =
+            '<div class="empty">تعذر الاتصال بخدمة الكشف</div>';
+        }
+      );
+    }
+
+    function renderSupervisorReport(supervisor, rows) {
+      const reportArea = document.getElementById('reportArea');
+
+      if (rows.length === 0) {
+        reportArea.innerHTML =
+          '<div class="empty">لا يوجد حجاج لهذا المشرف</div>';
+        return;
+      }
+
+      reportArea.innerHTML = `
+        <div class="box">
+          <h2 class="report-title">كشف الحجاج حسب المشرف</h2>
+          <h3 class="report-title">المشرف: ${escapeHtml(supervisor)}</h3>
+          <p class="report-title">عدد الحجاج: ${rows.length}</p>
+
+          <table id="reportTable">
+            <thead>
+              <tr>
+                <th>م</th>
+                <th>رقم الهوية</th>
+                <th>اسم الحاج</th>
+                <th>الجنسية</th>
+                <th>رقم الجوال</th>
+                <th>رقم الممر</th>
+                <th>رقم الصالة</th>
+                <th>رقم السرير</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${rows.map(function(item, index) {
+                return `
+                  <tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(item['رقم الهوية'])}</td>
+                    <td>${escapeHtml(item['اسم الحاج'])}</td>
+                    <td>${escapeHtml(item['الجنسية'])}</td>
+                    <td>${escapeHtml(item['رقم الجوال'])}</td>
+                    <td>${escapeHtml(item['رقم الممر'])}</td>
+                    <td>${escapeHtml(item['رقم الصالة'])}</td>
+                    <td>${escapeHtml(item['رقم السرير'])}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function exportReportToExcel() {
+      if (!currentReportRows || currentReportRows.length === 0) {
+        alert('لا يوجد كشف لتصديره');
+        return;
+      }
+
+      let html = `
+        <html dir="rtl">
+          <head>
+            <meta charset="UTF-8">
+          </head>
+
+          <body>
+            <h2>كشف الحجاج حسب المشرف</h2>
+            <h3>المشرف: ${escapeHtml(currentReportSupervisor)}</h3>
+            <p>عدد الحجاج: ${currentReportRows.length}</p>
+
+            <table border="1">
+              <tr>
+                <th>م</th>
+                <th>رقم الهوية</th>
+                <th>اسم الحاج</th>
+                <th>الجنسية</th>
+                <th>رقم الجوال</th>
+                <th>رقم الممر</th>
+                <th>رقم الصالة</th>
+                <th>رقم السرير</th>
+              </tr>
+
+              ${currentReportRows.map(function(item, index) {
+                return `
+                  <tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(item['رقم الهوية'])}</td>
+                    <td>${escapeHtml(item['اسم الحاج'])}</td>
+                    <td>${escapeHtml(item['الجنسية'])}</td>
+                    <td>${escapeHtml(item['رقم الجوال'])}</td>
+                    <td>${escapeHtml(item['رقم الممر'])}</td>
+                    <td>${escapeHtml(item['رقم الصالة'])}</td>
+                    <td>${escapeHtml(item['رقم السرير'])}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </table>
+          </body>
+        </html>
+      `;
+
+      const blob = new Blob(
+        [html],
+        {
+          type: 'application/vnd.ms-excel;charset=utf-8;'
+        }
+      );
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+
+      a.href = url;
+      a.download = 'كشف_' + currentReportSupervisor + '.xls';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      URL.revokeObjectURL(url);
+    }
+
+    function loadSupervisorsList() {
+      const area = document.getElementById('supervisorsListArea');
+
+      area.innerHTML = '<div class="empty">جاري تحميل كشوف المشرفين...</div>';
+
+      jsonp(
+        {
+          action: 'supervisors'
+        },
+        function(response) {
+          if (!response || !response.success) {
+            area.innerHTML = '<div class="empty">تعذر تحميل المشرفين</div>';
+            return;
+          }
+
+          const supervisors = response.data || [];
+
+          if (supervisors.length === 0) {
+            area.innerHTML = '<div class="empty">لا توجد بيانات مشرفين</div>';
+            return;
+          }
+
+          area.innerHTML = `
+            <div class="box">
+              <h2 class="report-title">كشوف المشرفين</h2>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>م</th>
+                    <th>رقم الهوية</th>
+                    <th>اسم المشرف</th>
+                    <th>رقم الجوال</th>
+                    <th class="no-print">إجراء</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  ${supervisors.map(function(item, index) {
+                    const phone = cleanSaudiPhone(item.phone);
+
+                    return `
+                      <tr>
+                        <td>${escapeHtml(item.serial || index + 1)}</td>
+                        <td>${escapeHtml(item.idNumber)}</td>
+                        <td>${escapeHtml(item.name)}</td>
+                        <td>${escapeHtml(phone || item.phone)}</td>
+
+                        <td class="no-print">
+                          ${
+                            phone
+                              ? `<a class="btn blue" href="tel:${phone}">اتصال</a>`
+                              : ''
+                          }
+
+                          ${
+                            phone
+                              ? `<a class="btn green" target="_blank" href="https://wa.me/${phone.replace('+', '')}">واتساب</a>`
+                              : ''
+                          }
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        },
+        function() {
+          area.innerHTML =
+            '<div class="empty">تعذر الاتصال بخدمة المشرفين</div>';
+        }
+      );
+    }
+
+    function loadStats() {
+      const area = document.getElementById('statsArea');
+
+      area.innerHTML = '<div class="empty">جاري تحميل الإحصائيات...</div>';
+
+      jsonp(
+        {
+          action: 'stats'
+        },
+        function(response) {
+          if (!response || !response.success) {
+            area.innerHTML =
+              '<div class="empty">تعذر تحميل الإحصائيات</div>';
+            return;
+          }
+
+          const stats = response.data;
+
+          area.innerHTML = `
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-number">${escapeHtml(stats.totalPilgrims)}</div>
+                <div class="stat-label">إجمالي الحجاج</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-number">${escapeHtml(stats.totalSupervisors)}</div>
+                <div class="stat-label">إجمالي المشرفين</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-number">${escapeHtml(stats.hallCounts.length)}</div>
+                <div class="stat-label">عدد الصالات</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-number">${escapeHtml(stats.corridorCounts.length)}</div>
+                <div class="stat-label">عدد الممرات</div>
+              </div>
+            </div>
+
+            <div class="box">
+              <h3>عدد الحجاج حسب المشرف</h3>
+              ${simpleCountTable(stats.supervisorCounts)}
+            </div>
+
+            <div class="box">
+              <h3>عدد الحجاج حسب الصالة</h3>
+              ${simpleCountTable(stats.hallCounts)}
+            </div>
+
+            <div class="box">
+              <h3>عدد الحجاج حسب الممر</h3>
+              ${simpleCountTable(stats.corridorCounts)}
+            </div>
+          `;
+        },
+        function() {
+          area.innerHTML =
+            '<div class="empty">تعذر الاتصال بخدمة الإحصائيات</div>';
+        }
+      );
+    }
+
+    function simpleCountTable(rows) {
+      if (!rows || rows.length === 0) {
+        return '<div class="empty">لا توجد بيانات</div>';
+      }
+
+      return `
+        <table>
+          <thead>
+            <tr>
+              <th>البيان</th>
+              <th>العدد</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${rows.map(function(item) {
+              return `
+                <tr>
+                  <td>${escapeHtml(item.name)}</td>
+                  <td>${escapeHtml(item.count)}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
     function field(label, value) {
@@ -299,11 +922,15 @@
     }
 
     function cleanSaudiPhone(phone) {
-      if (!phone) return '';
+      if (!phone) {
+        return '';
+      }
 
       let number = String(phone).replace(/\D/g, '');
 
-      if (!number) return '';
+      if (!number) {
+        return '';
+      }
 
       if (number.startsWith('966')) {
         return '+' + number;
@@ -321,7 +948,7 @@
     }
 
     function escapeHtml(value) {
-      return String(value)
+      return String(value || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
