@@ -28,7 +28,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-bottom: 16px;
     }
@@ -258,7 +258,7 @@
       }
 
       .tabs {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(1, 1fr);
       }
 
       .stats-grid {
@@ -304,16 +304,11 @@
         كشف حسب المشرف
       </button>
 
-      <button class="tab-btn" onclick="showSection('supervisorsSection', this); loadSupervisorsList();">
-        كشوف المشرفين
-      </button>
-
       <button class="tab-btn" onclick="showSection('statsSection', this); loadStats();">
         الإحصائيات
       </button>
     </div>
 
-    <!-- قسم البحث -->
     <section id="searchSection" class="section active">
       <div class="box no-print">
         <input
@@ -332,7 +327,6 @@
       </div>
     </section>
 
-    <!-- قسم كشف حسب المشرف -->
     <section id="reportsSection" class="section">
       <div class="box no-print">
         <select id="supervisorSelect" onchange="loadSupervisorReport()">
@@ -342,6 +336,7 @@
         <div class="actions">
           <button class="btn blue" onclick="window.print()">طباعة / PDF</button>
           <button class="btn green" onclick="exportReportToExcel()">تصدير Excel</button>
+          <button class="btn orange" onclick="createReportInSheet()">تحديث كشف المشرف في الشيت</button>
         </div>
       </div>
 
@@ -350,14 +345,6 @@
       </div>
     </section>
 
-    <!-- قسم كشوف المشرفين -->
-    <section id="supervisorsSection" class="section">
-      <div id="supervisorsListArea">
-        <div class="empty">جاري تحميل كشوف المشرفين...</div>
-      </div>
-    </section>
-
-    <!-- قسم الإحصائيات -->
     <section id="statsSection" class="section">
       <div id="statsArea">
         <div class="empty">جاري تحميل الإحصائيات...</div>
@@ -366,12 +353,7 @@
   </div>
 
   <script>
-    /*
-      ضع هنا رابط Apps Script Web App الذي ينتهي بـ /exec
-      مثال:
-      const API_URL = 'https://script.google.com/macros/s/AKfycbxxxxxxxxxxxx/exec';
-    */
-    const API_URL = 'https://script.google.com/macros/s/AKfycbx6b5pEk-jE00Tbi7wB7Ic8gQESNAY9lt2haicEstmW3a8YF5sKNt7_UfKjIQHoRyLe5A/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbygkNiQpONWh45IqiEN8QQht4_SH8zR81hK8_km3cyuzf3V3dgo649Nn42xX6LdC4hVOg/exec';
 
     let searchTimer = null;
     let currentReportRows = [];
@@ -576,7 +558,7 @@
             supervisors.map(function(item) {
               return `
                 <option value="${escapeHtml(item.name)}">
-                  ${escapeHtml(item.name)} - ${escapeHtml(item.phone || '')}
+                  ${escapeHtml(item.name)}
                 </option>
               `;
             }).join('');
@@ -623,6 +605,56 @@
         function() {
           reportArea.innerHTML =
             '<div class="empty">تعذر الاتصال بخدمة الكشف</div>';
+        }
+      );
+    }
+
+    function createReportInSheet() {
+      const supervisor = document.getElementById('supervisorSelect').value;
+
+      if (!supervisor) {
+        alert('اختر المشرف أولًا');
+        return;
+      }
+
+      const reportArea = document.getElementById('reportArea');
+
+      reportArea.innerHTML =
+        '<div class="empty">جاري تحديث شيت كشف المشرف...</div>';
+
+      jsonp(
+        {
+          action: 'createSupervisorSheetReport',
+          supervisor: supervisor
+        },
+        function(response) {
+          if (!response || !response.success) {
+            reportArea.innerHTML =
+              '<div class="empty">حدث خطأ أثناء تحديث كشف المشرف في الشيت</div>';
+            return;
+          }
+
+          const data = response.data;
+
+          reportArea.innerHTML = `
+            <div class="empty">
+              تم تحديث شيت: <b>${escapeHtml(data.sheetName)}</b>
+              <br>
+              المشرف: <b>${escapeHtml(data.supervisor)}</b>
+              <br>
+              عدد الحجاج: <b>${escapeHtml(data.count)}</b>
+              <br><br>
+              <a class="btn blue" target="_blank" href="${escapeHtml(data.spreadsheetUrl)}">
+                فتح Google Sheets
+              </a>
+            </div>
+          `;
+
+          loadSupervisorReport();
+        },
+        function() {
+          reportArea.innerHTML =
+            '<div class="empty">تعذر الاتصال بخدمة تحديث كشف المشرف</div>';
         }
       );
     }
@@ -742,82 +774,6 @@
       document.body.removeChild(a);
 
       URL.revokeObjectURL(url);
-    }
-
-    function loadSupervisorsList() {
-      const area = document.getElementById('supervisorsListArea');
-
-      area.innerHTML = '<div class="empty">جاري تحميل كشوف المشرفين...</div>';
-
-      jsonp(
-        {
-          action: 'supervisors'
-        },
-        function(response) {
-          if (!response || !response.success) {
-            area.innerHTML = '<div class="empty">تعذر تحميل المشرفين</div>';
-            return;
-          }
-
-          const supervisors = response.data || [];
-
-          if (supervisors.length === 0) {
-            area.innerHTML = '<div class="empty">لا توجد بيانات مشرفين</div>';
-            return;
-          }
-
-          area.innerHTML = `
-            <div class="box">
-              <h2 class="report-title">كشوف المشرفين</h2>
-
-              <table>
-                <thead>
-                  <tr>
-                    <th>م</th>
-                    <th>رقم الهوية</th>
-                    <th>اسم المشرف</th>
-                    <th>رقم الجوال</th>
-                    <th class="no-print">إجراء</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  ${supervisors.map(function(item, index) {
-                    const phone = cleanSaudiPhone(item.phone);
-
-                    return `
-                      <tr>
-                        <td>${escapeHtml(item.serial || index + 1)}</td>
-                        <td>${escapeHtml(item.idNumber)}</td>
-                        <td>${escapeHtml(item.name)}</td>
-                        <td>${escapeHtml(phone || item.phone)}</td>
-
-                        <td class="no-print">
-                          ${
-                            phone
-                              ? `<a class="btn blue" href="tel:${phone}">اتصال</a>`
-                              : ''
-                          }
-
-                          ${
-                            phone
-                              ? `<a class="btn green" target="_blank" href="https://wa.me/${phone.replace('+', '')}">واتساب</a>`
-                              : ''
-                          }
-                        </td>
-                      </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          `;
-        },
-        function() {
-          area.innerHTML =
-            '<div class="empty">تعذر الاتصال بخدمة المشرفين</div>';
-        }
-      );
     }
 
     function loadStats() {
